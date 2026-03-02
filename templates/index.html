@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国翻译史论文收集服务</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background-color: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #38a169;
+        }
+
+        .btn-secondary {
+            background-color: #718096;
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #2d3748;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .paper-item {
+            padding: 15px;
+            border-left: 3px solid #667eea;
+            background: #f7fafc;
+            margin-bottom: 15px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .paper-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .paper-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .paper-meta {
+            font-size: 0.9em;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        .paper-abstract {
+            font-size: 0.95em;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .paper-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .paper-link a:hover {
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .status-sent {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-pending {
+            background-color: #feebc8;
+            color: #744210;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #a0aec0;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📚 中国翻译史研究论文收集</h1>
+            <p>每周自动收集并推送最新论文到您的邮箱</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="actions">
+            <button class="btn btn-primary" onclick="searchPapers()">
+                🔍 搜索论文
+            </button>
+            <button class="btn btn-success" onclick="sendEmail()">
+                📧 发送邮件
+            </button>
+            <button class="btn btn-secondary" onclick="refreshPage()">
+                🔄 刷新
+            </button>
+        </div>
+
+        <div class="card">
+            <h2>📄 最近收集的论文</h2>
+            <div id="papers-list">
+                {% if papers %}
+                    {% for paper in papers %}
+                    <div class="paper-item">
+                        <div class="paper-title">{{ paper.title }}</div>
+                        <div class="paper-meta">
+                            <strong>作者：</strong>{{ paper.authors }} |
+                            <strong>期刊：</strong>{{ paper.journal }} |
+                            <strong>日期：</strong>{{ paper.publish_date }}
+                            {% if paper.sent_at %}
+                                <span class="status-badge status-sent">已发送</span>
+                            {% else %}
+                                <span class="status-badge status-pending">待发送</span>
+                            {% endif %}
+                        </div>
+                        {% if paper.abstract %}
+                        <div class="paper-abstract">{{ paper.abstract[:200] }}...</div>
+                        {% endif %}
+                        {% if paper.url %}
+                        <div class="paper-link">
+                            <a href="{{ paper.url }}" target="_blank">查看原文 →</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>暂无论文数据，点击"搜索论文"开始收集</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 发送记录</h2>
+            <div id="logs-list">
+                {% if logs %}
+                    {% for log in logs %}
+                    <div class="log-item">
+                        <span>{{ log.sent_at.strftime('%Y-%m-%d %H:%M') if log.sent_at else 'N/A' }}</span>
+                        <span>发送 {{ log.paper_count }} 篇</span>
+                        <span class="status-badge {% if log.status == 'success' %}status-sent{% else %}status-pending{% endif %}">
+                            {{ log.status }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>暂无发送记录</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📧 订阅管理</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="email" id="subscribe-email" placeholder="输入邮箱地址" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                <button class="btn btn-primary" onclick="subscribe()">订阅</button>
+            </div>
+            <p style="font-size: 0.9em; color: #718096; margin-bottom: 10px;">当前订阅者：</p>
+            <div id="subscribers-list">
+                {% if subscribers %}
+                    {% for sub in subscribers %}
+                    <div class="log-item">
+                        <span>{{ sub.email }}</span>
+                        <span style="color: #718096; font-size: 0.9em;">{{ sub.created_at.strftime('%Y-%m-%d') if sub.created_at else '' }}</span>
+                        <button onclick="unsubscribe('{{ sub.email }}')" style="background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">删除</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #718096;">暂无订阅者</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>每周一 9:00 自动运行 | 系统运行中</p>
+    </footer>
+
+    <script>
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = '<div class="loading">处理中...</div>';
+        }
+
+        async function searchPapers() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '搜索中...';
+
+            try {
+                const response = await fetch('/api/search', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    refreshPage();
+                } else {
+                    alert('搜索失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 搜索论文';
+            }
+        }
+
+        async function sendEmail() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '发送中...';
+
+            try {
+                const response = await fetch('/api/send', { method: 'POST' });
+                const data = await response.json();
+
+                alert(data.message);
+                refreshPage();
+            } catch (error) {
+                alert('请求失败: ' + error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📧 发送邮件';
+            }
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+
+        async function subscribe() {
+            const email = document.getElementById('subscribe-email').value.trim();
+            if (!email || !email.includes('@')) {
+                alert('请输入有效的邮箱地址');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await response.json();
+                alert(data.message);
+                if (data.success) {
+                    refreshPage();
+                }
+            } catch (error) {
+                alert('请求失败: ' + error);
+            }
+        }
+
+        async function unsubscribe(email) {
+            if (!confirm('确定要取消订阅 ' + email + ' 吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/unsubscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await response.json();
+                alert(data.message);
+                if (data.success) {
+                    refreshPage();
+                }
+            } catch (error) {
+                alert('请求失败: ' + error);
+            }
+        }
+    </script>
+</body>
+</html>
