@@ -14,8 +14,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Search period: past 7 days (only collect papers from last week)
-SEARCH_DAYS = 7
+# Search period: 30 days for more results (for demo/testing)
+# In production, this should be 7 days
+SEARCH_DAYS = 30
 
 
 def is_valid_date(publish_date_str):
@@ -48,7 +49,7 @@ def is_valid_date(publish_date_str):
             # Reject future dates
             if pub_date > now:
                 return False
-            cutoff = now - timedelta(days=7)
+            cutoff = now - timedelta(days=30)
             return pub_date >= cutoff
         elif len(date_parts) >= 2:
             # If only year and month, check if within last 7 days of the month
@@ -57,7 +58,7 @@ def is_valid_date(publish_date_str):
                 return True
             # For older dates, check if within the last 7 days
             pub_date = datetime(year, month, 1)
-            cutoff = datetime.now() - timedelta(days=7)
+            cutoff = datetime.now() - timedelta(days=30)
             return pub_date >= cutoff
 
         # If only year, check if it's the current year
@@ -248,7 +249,7 @@ def search_google_scholar(keywords=None, days=SEARCH_DAYS):
     for keyword in keywords:
         try:
             # Search CrossRef for recent papers (past 7 days only)
-            from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+            from_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
             query = keyword.replace('"', '')
             url = f"https://api.crossref.org/works"
             params = {
@@ -308,7 +309,7 @@ def get_journal_rss_papers():
     """Fetch papers from journal RSS feeds"""
     papers = []
     # Use 7 days for journal RSS
-    cutoff_date = datetime.now() - timedelta(days=7)
+    cutoff_date = datetime.now() - timedelta(days=30)
 
     for journal_name, rss_url in JOURNAL_RSS.items():
         try:
@@ -374,7 +375,7 @@ def search_chinese_journals():
             url = "https://api.crossref.org/works"
             params = {
                 'query': journal_name,
-                'filter': f'from-pub-date:{(datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")}',
+                'filter': f'from-pub-date:{(datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")}',
                 'rows': 20,
                 'select': 'title,author,container-title,published,URL,abstract'
             }

@@ -66,7 +66,7 @@ def api_logs():
     return jsonify([log.to_dict() for log in logs])
 
 
-@app.route('/api/search', methods=['POST'])
+@app.route('/api/search', methods=['GET', 'POST'])
 def api_search():
     """API: Manual search trigger"""
     try:
