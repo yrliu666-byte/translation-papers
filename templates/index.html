@@ -376,20 +376,20 @@
         async function searchPapers() {
             const btn = event.target;
             btn.disabled = true;
-            btn.textContent = '搜索中...';
+            btn.textContent = '🔄 正在抓取论文...';
 
             try {
                 const response = await fetch('/api/search', { method: 'POST' });
                 const data = await response.json();
 
                 if (data.success) {
-                    alert(data.message);
+                    alert('✅ ' + data.message);
                     refreshPage();
                 } else {
-                    alert('搜索失败: ' + data.message);
+                    alert('❌ 搜索失败: ' + data.message);
                 }
             } catch (error) {
-                alert('请求失败: ' + error);
+                alert('❌ 请求失败: ' + error);
             } finally {
                 btn.disabled = false;
                 btn.textContent = '🔍 搜索论文';
