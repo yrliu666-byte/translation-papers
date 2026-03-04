@@ -246,11 +246,29 @@ def is_relevant_paper(title, abstract, journal=''):
     # 1. 必须有翻译
     # 2. 必须有中国/历史关联
     # 3. 必须是历史/文化/宗教类翻译（不是现代应用翻译）
+    # 4. 中国相关术语必须与翻译术语在同一上下文中（更严格的相关性检查）
 
-    if not (has_translation and has_china_related):
+    if not (has_translation and has_china_related and has_historical_type):
         return False
 
-    return has_historical_type
+    # 额外验证：确保"中国"和"翻译"在标题或摘要中共同出现
+    # 避免收录只是提到中国但与中国翻译史无关的论文
+    title_and_abstract = (title + ' ' + (abstract or '')).lower()
+
+    # 检查是否同时包含中国相关词和翻译相关词
+    has_china_in_context = any(term in title_and_abstract for term in [
+        'china', 'chinese', 'qing', 'ming', 'imperial china',
+        'hong kong', 'taiwan', 'sinology'
+    ])
+    has_translation_in_context = any(term in title_and_abstract for term in [
+        'translation', 'translator', 'translating', 'interpreting'
+    ])
+
+    # 必须在标题或摘要中同时出现中国和翻译相关词
+    if not (has_china_in_context and has_translation_in_context):
+        return False
+
+    return True
 
 
 def search_google_scholar(keywords=None, days=SEARCH_DAYS):
