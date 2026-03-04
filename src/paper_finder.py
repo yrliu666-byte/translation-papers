@@ -96,6 +96,10 @@ SEARCH_KEYWORDS = [
     'missionary translation China',
     'Persian Chinese translation',
     'Arabic Chinese translation',
+    'Ming period translation',
+    'astronomy translation China',
+    'astrology translation Chinese',
+    'Persian Chinese glossary',
     # Chinese keywords - 翻译史
     '中国翻译史',
     '翻译史 研究',
@@ -486,6 +490,11 @@ def search_translation_studies_papers():
         'Chinese translator literature',
         'translation Chinese culture',
         'Chinese interpreting social',
+        # 针对特定期刊和主题
+        'Iranian Studies translation China',
+        'Iranian Studies Chinese',
+        'Cambridge translation Ming',
+        'Persian Chinese glossary',
     ]
     all_papers.extend(search_google_scholar(keywords=additional_keywords))
 
