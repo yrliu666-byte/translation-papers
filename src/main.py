@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import threading
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for, flash
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -23,6 +23,10 @@ from src.email_sender import send_email
 from src.database import save_paper, get_unsent_papers, mark_papers_as_sent
 from src.database import add_subscriber, remove_subscriber, get_all_subscribers
 from src.scheduler import collect_and_send_weekly
+from src.auth import (
+    authenticate_user, login_required, admin_required,
+    init_default_users, create_user
+)
 
 # Create Flask app
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +35,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Initialize database
 init_db()
+init_default_users()
 
 
 # Start scheduler in background
@@ -44,12 +49,43 @@ def start_scheduler_thread():
 
 # Routes
 @app.route('/')
+@login_required
 def index():
-    """Home page"""
+    """Home page - requires login"""
     papers = get_all_papers(limit=20)
     logs = get_email_logs(limit=10)
     subscribers = get_all_subscribers()
-    return render_template('index.html', papers=papers, logs=logs, subscribers=subscribers)
+    user_role = session.get('role', 'user')
+    return render_template('index.html', papers=papers, logs=logs, subscribers=subscribers, user_role=user_role)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+
+        user = authenticate_user(username, password)
+
+        if user:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            flash(f'Welcome, {user["username"]}!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password', 'danger')
+
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    """Logout"""
+    session.clear()
+    flash('Logged out successfully', 'info')
+    return redirect(url_for('login'))
 
 
 @app.route('/api/papers')
@@ -67,8 +103,9 @@ def api_logs():
 
 
 @app.route('/api/search', methods=['GET', 'POST'])
+@admin_required
 def api_search():
-    """API: Manual search trigger"""
+    """API: Manual search trigger - admin only"""
     try:
         papers = search_translation_studies_papers()
         saved_count = 0
@@ -90,8 +127,9 @@ def api_search():
 
 
 @app.route('/api/send', methods=['POST'])
+@admin_required
 def api_send():
-    """API: Manual send trigger"""
+    """API: Manual send trigger - admin only"""
     try:
         unsent_papers = get_unsent_papers()
 
