@@ -70,7 +70,7 @@ def is_valid_date(publish_date_str):
 # Search keywords for Chinese Translation Studies (Chinese Translation History)
 # 中国翻译史研究范围：文学翻译、宗教翻译、法律翻译、知识翻译、外交翻译等
 SEARCH_KEYWORDS = [
-    # English keywords
+    # English keywords - translation history
     'Chinese translation history',
     'translation history China',
     'Chinese translator history',
@@ -84,6 +84,18 @@ SEARCH_KEYWORDS = [
     'Republican era translation',
     'Hong Kong translation studies',
     'Taiwan translation studies',
+    # Knowledge transmission and cultural exchange
+    'knowledge transmission translation China',
+    'cultural transmission translation Chinese',
+    'translation Ming dynasty',
+    'translation Qing dynasty',
+    'translation imperial China',
+    'Chinese astronomy translation',
+    'Chinese science translation history',
+    'Jesuit translation China',
+    'missionary translation China',
+    'Persian Chinese translation',
+    'Arabic Chinese translation',
     # Chinese keywords - 翻译史
     '中国翻译史',
     '翻译史 研究',
