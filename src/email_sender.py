@@ -112,7 +112,9 @@ def format_email_content(papers):
 
 async def send_via_resend(subject, html_content):
     """Send email via Resend API"""
-    recipients = get_all_recipients()
+    # Resend free tier only allows sending to the registered email
+    # Once domain is verified, change this back to get_all_recipients()
+    recipients = ['yrliu666@gmail.com']
 
     url = "https://api.resend.com/emails"
     headers = {
