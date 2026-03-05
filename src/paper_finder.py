@@ -396,7 +396,72 @@ CHINESE_JOURNAL_KEYWORDS = [
 ]
 
 
-def search_chinese_journals():
+def search_specific_journals():
+    """Search specific journals known to publish Chinese translation history papers"""
+    papers = []
+
+    # 重点期刊列表
+    target_journals = [
+        'Iranian Studies',
+        'Asia Pacific Translation and Intercultural Studies',
+        'Target. International Journal of Translation Studies',
+        'Translation and Interpreting Studies',
+        'Journal of Chinese Humanities',
+    ]
+
+    for journal_name in target_journals:
+        try:
+            from_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+            url = "https://api.crossref.org/works"
+            params = {
+                'query.container-title': journal_name,
+                'query': 'China OR Chinese OR translation',
+                'filter': f'from-pub-date:{from_date}',
+                'rows': 20,
+                'select': 'title,author,container-title,published,URL,abstract'
+            }
+
+            response = requests.get(url, params=params, timeout=30)
+            if response.status_code == 200:
+                data = response.json()
+                for item in data.get('message', {}).get('items', []):
+                    title = item.get('title', [''])[0] if item.get('title') else ''
+                    if not title:
+                        continue
+
+                    # Get authors
+                    authors = item.get('author', [])
+                    authors_str = ', '.join([
+                        f"{a.get('family', '')} {a.get('given', '')}".strip()
+                        for a in authors[:3]
+                    ])
+
+                    # Get journal
+                    journal = item.get('container-title', [''])[0] if item.get('container-title') else journal_name
+
+                    # Get publication date
+                    pub_date = item.get('published', {}).get('date-parts', [[]])[0]
+                    publish_date_str = '-'.join(map(str, pub_date)) if pub_date else ''
+
+                    # Get abstract
+                    abstract = item.get('abstract', '')
+
+                    paper = {
+                        'title': title,
+                        'authors': authors_str,
+                        'journal': journal,
+                        'publish_date': publish_date_str,
+                        'url': item.get('URL', ''),
+                        'abstract': abstract,
+                        'source': f'Journal:{journal_name}'
+                    }
+                    papers.append(paper)
+
+            print(f"Searched {journal_name}: found {len(papers)} papers")
+        except Exception as e:
+            print(f"Error searching journal '{journal_name}': {e}")
+
+    return papers
     """
     Search for papers from Taiwanese/Hong Kong translation journals
     搜索台湾和香港的翻译学期刊
@@ -498,7 +563,11 @@ def search_translation_studies_papers():
     ]
     all_papers.extend(search_google_scholar(keywords=additional_keywords))
 
-    # Method 4: Search Chinese journals (翻译学报, 编译论丛) - DISABLED
+    # Method 4: Search specific journals directly
+    print("Searching specific journals...")
+    all_papers.extend(search_specific_journals())
+
+    # Method 5: Search Chinese journals (翻译学报, 编译论丛) - DISABLED
     # all_papers.extend(search_chinese_journals())
 
     # Deduplicate by title
