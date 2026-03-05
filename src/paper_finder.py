@@ -208,10 +208,13 @@ def is_relevant_paper(title, abstract, journal=''):
             return False
 
     # Check if it's a Chinese language paper - EXCLUDE Chinese papers
-    has_chinese_chars = any('\u4e00' <= c <= '\u9fff' for c in title + (abstract or ''))
+    # Allow papers with a few Chinese characters (e.g., book titles, names in citations)
+    # but exclude papers where Chinese is the main language
+    chinese_char_count = sum(1 for c in title + (abstract or '') if '\u4e00' <= c <= '\u9fff')
+    total_char_count = len(title + (abstract or ''))
 
-    # Exclude papers with Chinese characters in title or abstract (only English papers)
-    if has_chinese_chars:
+    # If more than 10% of characters are Chinese, it's likely a Chinese paper
+    if total_char_count > 0 and chinese_char_count / total_char_count > 0.1:
         return False
 
     # 必须有中国/历史相关术语
