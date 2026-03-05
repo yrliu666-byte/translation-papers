@@ -129,25 +129,24 @@ def api_search():
 @app.route('/api/send', methods=['POST'])
 @admin_required
 def api_send():
-    """API: Manual send trigger - admin only"""
+    """API: Manual send trigger - admin only. Sends ALL papers on the website."""
     try:
-        unsent_papers = get_unsent_papers()
+        all_papers = get_all_papers(limit=100)
 
-        if not unsent_papers:
+        if not all_papers:
             return jsonify({
                 'success': True,
-                'message': 'No new papers to send'
+                'message': 'No papers to send'
             })
 
-        success = send_email(unsent_papers)
+        success = send_email(all_papers)
 
         if success:
-            mark_papers_as_sent(unsent_papers)
-            log_email(len(unsent_papers), 'success', 'Manual trigger')
+            log_email(len(all_papers), 'success', 'Manual trigger')
 
         return jsonify({
             'success': success,
-            'message': f'Sent {len(unsent_papers)} papers'
+            'message': f'Sent {len(all_papers)} papers to all subscribers'
         })
     except Exception as e:
         log_email(0, 'error', str(e))
