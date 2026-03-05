@@ -465,6 +465,9 @@ def search_specific_journals():
             print(f"Error searching journal '{journal_name}': {e}")
 
     return papers
+
+
+def search_chinese_journals():
     """
     Search for papers from Taiwanese/Hong Kong translation journals
     搜索台湾和香港的翻译学期刊
@@ -570,8 +573,10 @@ def search_translation_studies_papers():
     print("Searching specific journals...")
     all_papers.extend(search_specific_journals())
 
-    # Method 5: Search Chinese journals (翻译学报, 编译论丛) - DISABLED
-    # all_papers.extend(search_chinese_journals())
+    # Method 5: Search Chinese journals (翻译学报, 编译论丛)
+    # These journals also publish English papers
+    print("Searching Chinese translation journals...")
+    all_papers.extend(search_chinese_journals())
 
     # Deduplicate by title
     seen_titles = set()
