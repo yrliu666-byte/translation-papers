@@ -303,7 +303,13 @@
                             {% endif %}
                         </div>
                         {% if paper.abstract %}
-                        <div class="paper-abstract">{{ paper.abstract[:200] }}...</div>
+                        <div class="paper-abstract">
+                            {% if paper.abstract|length > 500 %}
+                                {{ paper.abstract[:500] }}...
+                            {% else %}
+                                {{ paper.abstract }}
+                            {% endif %}
+                        </div>
                         {% endif %}
                         {% if paper.url %}
                         <div class="paper-link">
