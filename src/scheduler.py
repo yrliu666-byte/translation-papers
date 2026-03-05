@@ -1,6 +1,6 @@
 """
 Scheduler module
-Weekly task to search and send papers
+Weekly task to search and save papers only (no email)
 """
 
 import os
@@ -12,20 +12,78 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
 
-# Import modules
 from src.paper_finder import search_translation_studies_papers
-from src.database import (
-    init_db, save_paper, get_unsent_papers,
-    mark_papers_as_sent, log_email
-)
-from src.email_sender import send_email
+from src.database import init_db, save_paper
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def collect_weekly():
+    """
+    Weekly task: search and save papers to database only.
+    No email sending - mini app pulls from website directly.
+    """
+    logger.info("=" * 50)
+    logger.info("Starting weekly paper collection...")
+    start_time = datetime.now()
+
+    try:
+        papers = search_translation_studies_papers()
+        logger.info(f"Found {len(papers)} papers")
+
+        saved_count = 0
+        for paper in papers:
+            try:
+                if save_paper(paper):
+                    saved_count += 1
+            except Exception as e:
+                logger.error(f"Error saving paper: {e}")
+
+        duration = (datetime.now() - start_time).total_seconds()
+        logger.info(f"Saved {saved_count} new papers. Done in {duration:.2f}s")
+
+    except Exception as e:
+        logger.error(f"Error in weekly collection: {e}")
+
+
+# Keep for backward compatibility
+def collect_and_send_weekly():
+    collect_weekly()
+
+
+def run_scheduler():
+    """Run the scheduler"""
+    init_db()
+    logger.info("Database initialized")
+
+    scheduler = BlockingScheduler()
+
+    # Every Monday at 09:00 Beijing time - collect papers only
+    scheduler.add_job(
+        collect_weekly,
+        CronTrigger(day_of_week='mon', hour=9, minute=0, timezone='Asia/Shanghai'),
+        id='weekly_paper_collection',
+        name='Weekly paper collection',
+        replace_existing=True
+    )
+
+    logger.info("Scheduler started. Papers collected every Monday at 09:00 CST")
+
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Scheduler stopped")
+        scheduler.shutdown()
+
+
+if __name__ == '__main__':
+    print("Testing the weekly task...")
+    collect_weekly()
+
 
 
 def collect_and_send_weekly():
