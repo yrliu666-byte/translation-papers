@@ -18,6 +18,48 @@ load_dotenv()
 SEARCH_DAYS = 90
 
 
+def fetch_abstract_from_url(url):
+    """
+    Fetch abstract from paper URL if not available in CrossRef
+    """
+    if not url:
+        return None
+
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        if response.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Try different abstract selectors for different publishers
+        abstract_selectors = [
+            {'name': 'div', 'class': 'abstract'},
+            {'name': 'section', 'class': 'abstract'},
+            {'name': 'div', 'attrs': {'id': 'abstract'}},
+            {'name': 'p', 'class': 'abstract'},
+            {'name': 'div', 'class': 'abstractSection'},
+        ]
+
+        for selector in abstract_selectors:
+            element = soup.find(**selector)
+            if element:
+                text = element.get_text(strip=True)
+                # Clean up the text
+                text = re.sub(r'\s+', ' ', text)
+                text = text.replace('Abstract', '').strip()
+                if len(text) > 50:  # Valid abstract should be longer than 50 chars
+                    return text
+
+        return None
+    except Exception as e:
+        print(f"Error fetching abstract from {url}: {e}")
+        return None
+
+
 def is_valid_date(publish_date_str):
     """
     Validate that the date is within the last 7 days
@@ -449,12 +491,20 @@ def search_specific_journals():
                     # Get abstract
                     abstract = item.get('abstract', '')
 
+                    # If no abstract from CrossRef, try fetching from URL
+                    paper_url = item.get('URL', '')
+                    if not abstract and paper_url:
+                        print(f"  Fetching abstract from {paper_url[:50]}...")
+                        fetched_abstract = fetch_abstract_from_url(paper_url)
+                        if fetched_abstract:
+                            abstract = fetched_abstract
+
                     paper = {
                         'title': title,
                         'authors': authors_str,
                         'journal': journal,
                         'publish_date': publish_date_str,
-                        'url': item.get('URL', ''),
+                        'url': paper_url,
                         'abstract': abstract,
                         'source': f'Journal:{journal_name}'
                     }

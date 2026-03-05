@@ -302,13 +302,17 @@
                                 <span class="status-badge status-pending">待发送</span>
                             {% endif %}
                         </div>
-                        {% if paper.abstract %}
+                        {% if paper.abstract and paper.abstract != '暂无摘要' and paper.abstract != 'No abstract available' %}
                         <div class="paper-abstract">
                             {% if paper.abstract|length > 500 %}
                                 {{ paper.abstract[:500] }}...
                             {% else %}
                                 {{ paper.abstract }}
                             {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="paper-abstract" style="color: #a0aec0; font-style: italic;">
+                            暂无摘要 - 请点击"查看原文"了解详情
                         </div>
                         {% endif %}
                         {% if paper.url %}
