@@ -295,8 +295,8 @@ def search_google_scholar(keywords=None, days=SEARCH_DAYS):
             params = {
                 'query': query,
                 'filter': f'from-pub-date:{from_date}',
-                'rows': 30,
-                'select': 'title,author,container-title,published,URL,abstract'
+                'rows': 50,
+                'select': 'title,author,container-title,published,URL,abstract,type'
             }
 
             response = requests.get(url, params=params, timeout=30)
@@ -538,6 +538,80 @@ def search_chinese_journals():
     return papers
 
 
+def search_monographs_and_chapters():
+    """
+    Search CrossRef specifically for monographs and book chapters
+    related to Chinese translation history, published by major academic presses
+    """
+    papers = []
+    from_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+
+    # Keywords tailored for books and chapters
+    book_keywords = [
+        'Chinese translation history',
+        'Chinese literary translation',
+        'translation China history',
+        'Chinese literature translation',
+        'Chinese Buddhism translation',
+        'Sinology translation',
+        'China globalism literature',
+        'Chinese classics translation',
+    ]
+
+    # Search each type separately for better coverage
+    for work_type in ['monograph', 'book-chapter']:
+        for keyword in book_keywords:
+            try:
+                params = {
+                    'query': keyword,
+                    'filter': f'from-pub-date:{from_date},type:{work_type}',
+                    'rows': 20,
+                    'select': 'title,author,container-title,published,URL,abstract,type,publisher'
+                }
+                response = requests.get(
+                    "https://api.crossref.org/works",
+                    params=params,
+                    timeout=30
+                )
+                if response.status_code == 200:
+                    for item in response.json().get('message', {}).get('items', []):
+                        title = item.get('title', [''])[0] if item.get('title') else ''
+                        if not title:
+                            continue
+
+                        abstract = item.get('abstract', '')
+                        journal = item.get('container-title', [''])[0] if item.get('container-title') else ''
+                        publisher = item.get('publisher', '')
+
+                        if not is_relevant_paper(title, abstract, journal):
+                            continue
+
+                        authors = item.get('author', [])
+                        authors_str = ', '.join([
+                            f"{a.get('family', '')}".strip()
+                            for a in authors[:3] if a.get('family')
+                        ])
+
+                        pub_date = item.get('published', {}).get('date-parts', [[]])[0]
+                        publish_date_str = '-'.join(map(str, pub_date)) if pub_date else ''
+
+                        papers.append({
+                            'title': title,
+                            'authors': authors_str,
+                            'journal': journal or publisher,
+                            'publish_date': publish_date_str,
+                            'url': item.get('URL', ''),
+                            'abstract': abstract,
+                            'source': f'CrossRef:{work_type}'
+                        })
+
+            except Exception as e:
+                print(f"Error searching {work_type} '{keyword}': {e}")
+
+    print(f"Found {len(papers)} monographs/book-chapters")
+    return papers
+
+
 def search_translation_studies_papers():
     """
     Search for Chinese Translation Studies papers
@@ -572,6 +646,10 @@ def search_translation_studies_papers():
     # Method 4: Search specific journals directly
     print("Searching specific journals...")
     all_papers.extend(search_specific_journals())
+
+    # Method 5: Search monographs and book chapters
+    print("Searching monographs and book chapters...")
+    all_papers.extend(search_monographs_and_chapters())
 
     # Method 5: Search Chinese journals (翻译学报, 编译论丛)
     # These journals also publish English papers
