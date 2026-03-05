@@ -116,6 +116,9 @@ async def send_via_resend(subject, html_content):
         print("RESEND_API_KEY not set")
         return False
 
+    # Get all recipients (default + subscribers)
+    recipients = get_all_recipients()
+
     url = "https://api.resend.com/emails"
     headers = {
         "Authorization": f"Bearer {RESEND_API_KEY}",
@@ -123,7 +126,7 @@ async def send_via_resend(subject, html_content):
     }
     data = {
         "from": "中国翻译史论文 <onboarding@resend.dev>",
-        "to": [EMAIL_TO],
+        "to": recipients,
         "subject": subject,
         "html": html_content
     }
@@ -131,7 +134,7 @@ async def send_via_resend(subject, html_content):
     try:
         response = requests.post(url, json=data, headers=headers, timeout=30)
         if response.status_code == 200:
-            print(f"Email sent successfully via Resend to {EMAIL_TO}")
+            print(f"Email sent successfully via Resend to {recipients}")
             return True
         else:
             print(f"Resend API error: {response.status_code} - {response.text}")
