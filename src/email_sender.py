@@ -155,30 +155,22 @@ async def send_email_async(subject, html_content):
 
     # Fall back to SMTP if Resend not configured
     if not SMTP_PASSWORD:
-        print("No email method configured (neither RESEND_API_KEY nor SMTP_PASSWORD)")
-        return False
+        raise RuntimeError(
+            f"未配置邮件发送方式：SMTP_PASSWORD 未设置（SMTP_HOST={SMTP_HOST}, SMTP_USER={SMTP_USER}）"
+        )
 
-    # SMTP sending (simplified without aiosmtplib for now)
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
 
-    # Get all recipients (default + subscribers)
     recipients = get_all_recipients()
-
-    message = MIMEMultipart('alternative')
-    message['Subject'] = subject
-    message['From'] = f'论文管理系统 <{EMAIL_FROM}>'
-    message['To'] = ', '.join(recipients)
-
-    html_part = MIMEText(html_content, 'html', 'utf-8')
-    message.attach(html_part)
+    if not recipients:
+        raise RuntimeError("没有收件人，请先添加订阅者")
 
     try:
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
-            # Send to each recipient individually
             for recipient in recipients:
                 msg_copy = MIMEMultipart('alternative')
                 msg_copy['Subject'] = subject
@@ -188,9 +180,12 @@ async def send_email_async(subject, html_content):
                 server.send_message(msg_copy)
         print(f"Email sent successfully via SMTP to {recipients}")
         return True
+    except smtplib.SMTPAuthenticationError as e:
+        raise RuntimeError(f"SMTP 认证失败，请检查用户名和密码：{e}")
+    except smtplib.SMTPConnectError as e:
+        raise RuntimeError(f"无法连接到 SMTP 服务器 {SMTP_HOST}:{SMTP_PORT}：{e}")
     except Exception as e:
-        print(f"Error sending email via SMTP: {e}")
-        return False
+        raise RuntimeError(f"SMTP 发送失败：{e}")
 
 
 def send_email(papers):

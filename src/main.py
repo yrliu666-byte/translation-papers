@@ -130,29 +130,25 @@ def api_search():
 @admin_required
 def api_send():
     """API: Manual send trigger - admin only. Sends ALL papers on the website."""
+    all_papers = get_all_papers(limit=100)
+
+    if not all_papers:
+        return jsonify({'success': False, 'message': '网站上没有论文可发送，请先搜索论文'}), 400
+
     try:
-        all_papers = get_all_papers(limit=100)
-
-        if not all_papers:
-            return jsonify({
-                'success': True,
-                'message': 'No papers to send'
-            })
-
-        success = send_email(all_papers)
-
-        if success:
-            log_email(len(all_papers), 'success', 'Manual trigger')
-
+        send_email(all_papers)
+        log_email(len(all_papers), 'success', 'Manual trigger')
         return jsonify({
-            'success': success,
-            'message': f'Sent {len(all_papers)} papers to all subscribers'
+            'success': True,
+            'message': f'✅ 成功发送 {len(all_papers)} 篇论文给所有订阅者'
         })
     except Exception as e:
-        log_email(0, 'error', str(e))
+        error_msg = str(e)
+        print(f"Send email error: {error_msg}")
+        log_email(0, 'error', error_msg)
         return jsonify({
             'success': False,
-            'message': str(e)
+            'message': f'❌ 发送失败：{error_msg}'
         }), 500
 
 
