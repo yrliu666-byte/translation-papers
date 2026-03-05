@@ -168,7 +168,7 @@ async def send_email_async(subject, html_content):
 
     message = MIMEMultipart('alternative')
     message['Subject'] = subject
-    message['From'] = EMAIL_FROM
+    message['From'] = f'论文管理系统 <{EMAIL_FROM}>'
     message['To'] = ', '.join(recipients)
 
     html_part = MIMEText(html_content, 'html', 'utf-8')
@@ -182,7 +182,7 @@ async def send_email_async(subject, html_content):
             for recipient in recipients:
                 msg_copy = MIMEMultipart('alternative')
                 msg_copy['Subject'] = subject
-                msg_copy['From'] = EMAIL_FROM
+                msg_copy['From'] = f'论文管理系统 <{EMAIL_FROM}>'
                 msg_copy['To'] = recipient
                 msg_copy.attach(MIMEText(html_content, 'html', 'utf-8'))
                 server.send_message(msg_copy)
