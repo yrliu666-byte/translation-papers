@@ -112,11 +112,6 @@ def format_email_content(papers):
 
 async def send_via_resend(subject, html_content):
     """Send email via Resend API"""
-    if not RESEND_API_KEY:
-        print("RESEND_API_KEY not set")
-        return False
-
-    # Get all recipients (default + subscribers)
     recipients = get_all_recipients()
 
     url = "https://api.resend.com/emails"
@@ -125,7 +120,7 @@ async def send_via_resend(subject, html_content):
         "Content-Type": "application/json"
     }
     data = {
-        "from": "中国翻译史论文 <onboarding@resend.dev>",
+        "from": "论文管理系统 <onboarding@resend.dev>",
         "to": recipients,
         "subject": subject,
         "html": html_content
@@ -134,29 +129,28 @@ async def send_via_resend(subject, html_content):
     try:
         response = requests.post(url, json=data, headers=headers, timeout=30)
         if response.status_code == 200:
-            print(f"Email sent successfully via Resend to {recipients}")
+            print(f"Email sent via Resend to {recipients}")
             return True
         else:
-            print(f"Resend API error: {response.status_code} - {response.text}")
-            return False
+            raise RuntimeError(f"Resend API 错误 {response.status_code}：{response.text}")
+    except RuntimeError:
+        raise
     except Exception as e:
-        print(f"Error sending via Resend: {e}")
-        return False
+        raise RuntimeError(f"Resend 请求失败：{e}")
 
 
 async def send_email_async(subject, html_content):
-    """Send email - tries Resend first, then falls back to SMTP"""
+    """Send email - uses Resend if configured, otherwise SMTP"""
 
-    # Try Resend API first
+    # Use Resend if API key is set
     if RESEND_API_KEY:
-        success = await send_via_resend(subject, html_content)
-        if success:
-            return True
+        await send_via_resend(subject, html_content)
+        return True
 
-    # Fall back to SMTP if Resend not configured
+    # Fall back to SMTP only if Resend not configured
     if not SMTP_PASSWORD:
         raise RuntimeError(
-            f"未配置邮件发送方式：SMTP_PASSWORD 未设置（SMTP_HOST={SMTP_HOST}, SMTP_USER={SMTP_USER}）"
+            "未配置邮件发送方式：请在 Railway 中设置 RESEND_API_KEY 或 SMTP_PASSWORD"
         )
 
     import smtplib
